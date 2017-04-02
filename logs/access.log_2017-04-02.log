@@ -1,6 +1,0 @@
-[2017-04-02 12:15:22.645] [INFO] log - blog_server listening on port 8080
-[2017-04-02 12:15:22.682] [INFO] log - 数据库连接成功: mongodb://localhost:27017/blog_dev
-[2017-04-02 12:21:53.548] [INFO] log - blog_server listening on port 8080
-[2017-04-02 12:21:53.581] [INFO] log - 数据库连接成功: mongodb://localhost:27017/blog_dev
-[2017-04-02 12:22:07.553] [INFO] log - blog_server listening on port 8080
-[2017-04-02 12:22:07.589] [INFO] log - 数据库连接成功: mongodb://localhost:27017/blog_dev
