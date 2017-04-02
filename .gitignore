@@ -3,7 +3,6 @@ _config.yml
 *.zip
 *.txt
 node_modules
-logs
 backup
 .DS_Store
 .svn
