@@ -7,10 +7,10 @@ let multipartMiddleware = multipart();
 
 let fs = require('fs');
 
-let mongoose = require('mongoose');
 let $checkToken = require('../utils/checkToken.utils.js');
 
 //控制器
+var authController = require('../controllers/auth.controller.js');
 let UsersController = require('../controllers/users.controller.js');
 let TagsController = require('../controllers/tags.controller.js');
 let ArticleController = require('../controllers/article.controller.js');
@@ -20,6 +20,11 @@ let StatisticController = require('../controllers/statistic.controller.js');
 //数据库查询同一错误处理
 let DO_ERROR_RES = require('../utils/DO_ERROE_RES.js');
 
+
+// 认证
+router.post( '/signin', authController.signin);  //用户登录
+router.post('/signup', authController.signup); //用户注册
+router.get('/users/:userId/verify', authController.activeAccount);  //邮箱链接激活帐户
 
 /**
  * API请求验证

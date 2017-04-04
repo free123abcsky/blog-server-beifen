@@ -10,6 +10,7 @@
     "monit": "pm2 monit"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "body-parser": "~1.13.2",
     "compression": "^1.6.2",
     "connect-multiparty": "^2.0.0",

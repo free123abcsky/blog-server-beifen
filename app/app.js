@@ -6,6 +6,7 @@
 'use strict'
 let express = require('express');
 var logger  = require('./utils/logger');  //日志管理
+var resapi = require('./middlewares/res.api.js');
 var log4js = require('log4js');
 let path = require('path');
 let cookieParser = require('cookie-parser');
@@ -17,8 +18,6 @@ var cors = require('cors');
 var env = process.env.NODE_ENV || 'development';
 var config = require('./config/config')[env];
 
-// 引入 mongoose 配置文件,执行配置文件中的函数，以实现数据库的配置和 Model 的创建等
-//let mongoose = require('./config/mongoose.js');
 let webRouter = require('./routes/web.routes.js'); //主页及后台管理页面
 let apiRouter = require('./routes/api.routes.js'); //api入口
 let app = express();
@@ -28,6 +27,7 @@ require('./utils/db')(config);
 //配置路由基本设置（中间件设置）
 app.set('port', process.env.PORT || config.port);
 app.use(log4js.connectLogger(logger, {level:log4js.levels.INFO, format:':method :url'}));
+app.use(resapi);
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
