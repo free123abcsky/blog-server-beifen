@@ -16,24 +16,6 @@ module.exports = function(req, res, next) {
     next();
 };
 
-/**
- Usages:
- // 最通用的api接口
- return res.api(404 ,err, {
-    code : 1,
-    msg  : 'delete failed!'
-  });
- // 返回成功带有状态的json数据
- return res.api(err, {
-    code : 1,
-    msg  : 'delete failed!'
-  });
-
- // 最常用的成功返回json数据
- return res.api(err);
- // 出错
- 返回code : 222222222
- */
 function retJson(){
     var _res = this;
 
@@ -75,7 +57,6 @@ function retJson(){
     }
 
     function _is_not_has_prototype(name){
-        console.dir(_res)
         return !_res.hasOwnProperty(name)&&(name in _res);
     }
 

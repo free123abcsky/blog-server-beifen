@@ -10,6 +10,7 @@ var User = require('../models').User;
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
 var logger  = require('../utils/logger');
+var ERROR  = require('../utils/errcode');
 var mail = require('../utils/mail');
 
 function genLoginToken(user) {
@@ -37,11 +38,11 @@ exports.signin = function(req, res) {
 
     // 验证信息的正确性
     if ([email, password].some(function (item) { return item === ''; })) {
-        return res.retError({code: 400, msg: '信息不完整'});
+        return res.retError({code: ERROR.PARAM_ERROR, msg: '信息不完整'});
     }
 
     if (!validator.isEmail(email)) {
-        return res.retError({code: 400, msg: '邮箱不合法'});
+        return res.retError({code: ERROR.PARAM_ERROR, msg: '邮箱不合法'});
     }
 
     User
@@ -50,20 +51,16 @@ exports.signin = function(req, res) {
         })
         .exec(function(err, user) {
             if (!user) {
-                return res.retError({code: 400, msg: '用户不存在'});
+                return res.retError({code: ERROR.DATA_NOT_FOUND, msg: '用户不存在'});
             }
 
             if (user.auth(password)) {
                 user = user.toObject();
                 delete user.passwordHash;
-                var token = genLoginToken(user);
-
-                return res.retJson({
-                    user: user,
-                    token: token
-                });
+                user.token = genLoginToken(user);
+                return res.retJson(user);
             } else {
-                return res.retError({code: 400, msg: '用户名或密码错误'});
+                return res.retError({code: ERROR.LOGIN_REQUIRED, msg: '用户名或密码错误'});
             }
         });
 };
@@ -81,12 +78,12 @@ exports.signup = function(req, res) {
     // 验证信息的正确性
     if ([email, password].some(function (item) { return item === ''; })) {
 
-        return res.retError({code: 400, msg: '信息不完整'});
+        return res.retError({code: ERROR.PARAM_ERROR, msg: '信息不完整'});
     }
 
     if (!validator.isEmail(email)) {
 
-        return res.retError({code: 400, msg: '邮箱不合法'});
+        return res.retError({code: ERROR.PARAM_ERROR, msg: '邮箱不合法'});
     }
 
     User
@@ -96,7 +93,7 @@ exports.signup = function(req, res) {
         .exec(function(err, user) {
             if (user) {
 
-                return res.retError({code: 400, msg: '该用户已存在'});
+                return res.retError({code: ERROR.DATA_EXISTED, msg: '该用户已存在'});
             }
 
             user = new User({
@@ -153,19 +150,15 @@ exports.activeAccount = function(req, res) {
 
                     user = user.toObject();
                     delete user.passwordHash;
-                    var token = genLoginToken(user);
-
-                    return res.retJson({
-                        user: user,
-                        token: token
-                    });
+                    user.token = genLoginToken(user);
+                    return res.retJson(user);
 
                 });
             });
 
     } else {
 
-        return res.retError({code: 400, msg: '帐号验证失败'});
+        return res.retError({code: ERROR.DATA_INVALID, msg: '帐号验证失败'});
     }
 };
 
