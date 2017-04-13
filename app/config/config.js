@@ -10,15 +10,7 @@ module.exports = {
     db: 'mongodb://localhost:27017/blog_dev', // 连接字符串格式为mongodb://主机/数据库名
     baiduAK:"yFKaMEQnAYc1hA0AKaNyHGd4HTQgTNvO",
     port: '8080',
-    sessionSecret: 'what should i do?',
-    // 邮箱配置
-    mail_opts: {
-      service: '163',
-      auth: {
-        user: 'fansuo_k@163.com',
-        pass: 'xdqmwy56hi'
-      }
-    },
+    sessionSecret: 'what should i do?'
   },
   production: {
 
@@ -27,14 +19,6 @@ module.exports = {
     baiduAK:"yFKaMEQnAYc1hA0AKaNyHGd4HTQgTNvO",
     port: '8080',
     sessionSecret: 'what should i do?',
-    // 邮箱配置
-    mail_opts: {
-      service: '163',
-      auth: {
-        user: 'fansuo_k@163.com',
-        pass: 'xdqmwy56hi'
-      }
-    },
   }
 };
 
