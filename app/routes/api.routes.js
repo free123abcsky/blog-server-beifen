@@ -4,10 +4,16 @@ let router = express.Router();
 
 let multipart = require('connect-multiparty');
 let multipartMiddleware = multipart();
+var expressJwt = require('express-jwt');
+var env = process.env.NODE_ENV || 'development';
+var config = require('../config/config')[env];
 
 let fs = require('fs');
 
 let $checkToken = require('../utils/checkToken.utils.js');
+var jwtOptions = {
+    secret: config.sessionSecret
+};
 
 //控制器
 var authController = require('../controllers/auth.controller.js');
@@ -30,31 +36,31 @@ router.get('/users/:userId/verify', authController.activeAccount);  //邮箱链�
  * API请求验证
  * get请求+post(login/register/upload)请求不需要token,其余都需要检查token
  * */
-router.all('*', function (req, res, next) {
-    let method = req.method.toLocaleLowerCase();
-    let path = req.path.toString();
-    if (method === 'get' || path.includes('register') || path.includes('login') || path.includes('upload') || (method === 'post' && path.includes('comment'))) {
-        return next();
-    } else {
-        let authorization = req.get("authorization");
-        if (!!authorization) {
-            let token = authorization.split(" ")[1];
-            $checkToken(token).then(function () {
-                console.log("*********token check success!**********")
-                return next();
-            }, function (errObj) {
-                res.status(200);
-                res.send(errObj);
-            });
-        } else {
-            res.status(200);
-            res.send({
-                "code": "10",
-                "msg": "need token!"
-            });
-        }
-    }
-});
+// router.all('*', function (req, res, next) {
+//     let method = req.method.toLocaleLowerCase();
+//     let path = req.path.toString();
+//     if (method === 'get' || path.includes('register') || path.includes('login') || path.includes('upload') || (method === 'post' && path.includes('comment'))) {
+//         return next();
+//     } else {
+//         let authorization = req.get("authorization");
+//         if (!!authorization) {
+//             let token = authorization.split(" ")[1];
+//             $checkToken(token).then(function () {
+//                 console.log("*********token check success!**********")
+//                 return next();
+//             }, function (errObj) {
+//                 res.status(200);
+//                 res.send(errObj);
+//             });
+//         } else {
+//             res.status(200);
+//             res.send({
+//                 "code": "10",
+//                 "msg": "need token!"
+//             });
+//         }
+//     }
+// });
 
 
 /**
@@ -144,7 +150,7 @@ router.get('/tag/:id', TagsController.getById);
 //增加
 router.post('/tag', TagsController.add);
 //修改
-router.put('/tag', TagsController.edit);
+router.put('/tag', expressJwt(jwtOptions), TagsController.edit);
 //delete
 router.delete('/tag/:id', TagsController.delete);
 
