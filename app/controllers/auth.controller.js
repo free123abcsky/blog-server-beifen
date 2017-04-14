@@ -72,6 +72,7 @@ exports.signin = function(req, res) {
  * @returns {*}
  */
 exports.signup = function(req, res) {
+
     var email = req.body.email;
     var password = req.body.password;
 
@@ -105,13 +106,10 @@ exports.signup = function(req, res) {
 
                 mail.sendActiveMail(email, user._id);
                 user = user.toObject();
+                user.token = genLoginToken(user);
                 delete user.passwordHash;
-                var token = genLoginToken(user);
 
-                return res.retJson({
-                    user: user,
-                    token: token
-                });
+                return res.retJson(user);
             });
         });
 };
@@ -136,13 +134,10 @@ exports.activeAccount = function(req, res) {
                 if (user.activated === true) {
 
                     user = user.toObject();
+                    user.token = genLoginToken(user);
                     delete user.passwordHash;
-                    var token = genLoginToken(user);
 
-                    return res.retJson({
-                        user: user,
-                        token: token
-                    });
+                    return res.retJson(user);
                 }
 
                 user.activated = true;

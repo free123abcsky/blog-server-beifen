@@ -4,18 +4,6 @@
  * Desc：api middleware
  */
 
-module.exports = function(req, res, next) {
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
-    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
-
-    res.retJson = retJson;
-    res.retError = retError;
-
-    next();
-};
-
 function retJson(){
     var _res = this;
 
@@ -77,12 +65,19 @@ function retJson(){
 
 function retError(status){
     var _res = this;
-    var _error_code = 200;
-    var _error_status_code =  status.code || -1;
-    var _error_status_msg =   status.msg ||'api error';
 
-    _res.retJson(_error_code, {}, {
-        code : _error_status_code,
-        msg  : _error_status_msg
+    status.code = status.code || -1;
+    status.msg = status.msg || 'api error';
+
+    _res.status(200).json({
+        status  : status
     });
 }
+
+module.exports = function(req, res, next) {
+
+    res.retJson = retJson;
+    res.retError = retError;
+
+    next();
+};
