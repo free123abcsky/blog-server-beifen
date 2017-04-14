@@ -9,3 +9,4 @@ backup
 .svn
 uploads
 /app/config/config - 副本.js
+/app/config/config.js
