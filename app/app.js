@@ -14,7 +14,7 @@ let bodyParser = require('body-parser');  //请求内容解析中间件
 var compression = require('compression');  //gzip压缩中间件
 var errorhandler = require('errorhandler');  //错误处理中间件
 var cors = require('cors');
-
+var ERROR  = require('./utils/errcode');
 var env = process.env.NODE_ENV || 'development';
 var config = require('./config/config')[env];
 
@@ -28,7 +28,7 @@ require('./utils/db')(config);
 app.set('port', process.env.PORT || config.port);
 app.use(log4js.connectLogger(logger, {level:log4js.levels.INFO, format:':method :url'}));
 app.use(resapi);
-app.use(cors());
+//app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: false
@@ -48,10 +48,32 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 app.use('/', webRouter);
 app.use('/api', apiRouter);
+//
+// if ('development' == app.get('env')) {
+//     app.use(errorhandler());
+// }else {
+//     app.use(function (err, req, res, next) {
+//         logger.error(err);
+//         if (err.name === 'UnauthorizedError') {
+//             if(err.inner.name === 'TokenExpiredError'){
+//                 res.retError({code: ERROR.TOKEN_EXPIRE, msg: 'token过期，请重新登录'});
+//             }
+//             res.retError({code: ERROR.PERMISSION_DENIED, msg: '您的权限不足'});
+//         }
+//         res.status(500).send('500 status');
+//     });
+// }
 
-if ('development' == app.get('env')) {
-    app.use(errorhandler());
-}
+app.use(function (err, req, res, next) {
+    logger.error(err);
+    if (err.name === 'UnauthorizedError') {
+        if(err.inner.name === 'TokenExpiredError'){
+            return res.retError({code: ERROR.TOKEN_EXPIRE, msg: 'token过期，请重新登录'});
+        }
+        res.retError({code: ERROR.PERMISSION_DENIED, msg: '您的权限不足'});
+    }
+    res.status(500).send('500 status');
+});
 
 //监听端口设置
 if (!module.parent) {

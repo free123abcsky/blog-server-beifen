@@ -5,6 +5,8 @@
  */
 var mongoose = require('mongoose');
 var logger  = require('./logger');
+// 此处防止 node.js - Mongoose: mpromise 错误
+mongoose.Promise = global.Promise;
 
 module.exports = function(config){
 

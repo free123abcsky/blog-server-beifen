@@ -7,10 +7,10 @@ var bcrypt = require('bcryptjs');  //引入加密模块
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;  //一种以文件形式存储的数据库模型骨架，不具备数据库的操作能力
 
-//定义一个Schema  schema是mongoose里会用到的一种数据模式，可以理解为表结构的定义
 /**
+ * 定义一个Schema  schema是mongoose里会用到的一种数据模式，可以理解为表结构的定义
  * id由数据库自己生成,名字为_id
- * */
+ */
 var UserSchema = new Schema({
     email: {type: String, required: true},//邮箱
     username: {type: String, default: ''},//名字

@@ -10,10 +10,16 @@ var User = require('../models').User;
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
 var logger  = require('../utils/logger');
+let getClientIp = require('../utils/getClientIp.utils.js');
 var ERROR  = require('../utils/errcode');
 var mail = require('../utils/mail');
 
-function genLoginToken(user) {
+/**
+ * 创建 token
+ * @param user
+ * @returns {*}
+ */
+function createToken(user) {
     _user = {
         _id: user._id,
         email: user.email
@@ -22,6 +28,7 @@ function genLoginToken(user) {
     var token = jwt.sign(user, config.sessionSecret, {
         expiresIn: 60 * 24 * 30
     });
+
 
     return token;
 }
@@ -35,6 +42,7 @@ function genLoginToken(user) {
 exports.signin = function(req, res) {
     var email = req.body.email;
     var password = req.body.password;
+    let user_ip = getClientIp(req);
 
     // 验证信息的正确性
     if ([email, password].some(function (item) { return item === ''; })) {
@@ -57,7 +65,7 @@ exports.signin = function(req, res) {
             if (user.auth(password)) {
                 user = user.toObject();
                 delete user.passwordHash;
-                user.token = genLoginToken(user);
+                user.token = createToken(user);
                 return res.retJson(user);
             } else {
                 return res.retError({code: ERROR.LOGIN_REQUIRED, msg: '用户名或密码错误'});
@@ -106,7 +114,7 @@ exports.signup = function(req, res) {
 
                 mail.sendActiveMail(email, user._id);
                 user = user.toObject();
-                user.token = genLoginToken(user);
+                user.token = createToken(user);
                 delete user.passwordHash;
 
                 return res.retJson(user);
@@ -134,7 +142,7 @@ exports.activeAccount = function(req, res) {
                 if (user.activated === true) {
 
                     user = user.toObject();
-                    user.token = genLoginToken(user);
+                    user.token = createToken(user);
                     delete user.passwordHash;
 
                     return res.retJson(user);
@@ -145,7 +153,7 @@ exports.activeAccount = function(req, res) {
 
                     user = user.toObject();
                     delete user.passwordHash;
-                    user.token = genLoginToken(user);
+                    user.token = createToken(user);
                     return res.retJson(user);
 
                 });

@@ -8,6 +8,7 @@ let mongoose = require('mongoose');
 let Tags = require('../models').Tag;
 let Articles = require('../models').Article;
 let Comments = require('../models').Comment;
+let fs = require('fs');
 let DO_ERROR_RES = require('../utils/DO_ERROE_RES.js');
 
 let marked = require('marked');
@@ -554,6 +555,55 @@ module.exports = {
             });
         })
     },
+    /**
+     * 图片上传
+     * @param req
+     * @param res
+     * @param next
+     */
+    imgUpload: function(req, res, next){
+
+        if (req.files) {
+            const UploadFilePath = './uploads/';
+            let imgInfo = req.files.uploadImg;
+
+            fs.readFile(imgInfo.path, function (err, data) {
+                if (err) {
+                    res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该图片不存在'})
+                }
+                let arr = imgInfo.type.split('/');
+                let suffix = arr[arr.length - 1];
+
+                //新建文件名
+                let fileName = `${Date.parse(new Date())}.${suffix}`;
+                let uploadPath = `${UploadFilePath}${fileName}`;
+
+                console.log('上传图片的存放位置:' + uploadPath);
+                fs.writeFile(uploadPath, data, function (err) {
+                    if (err) {
+                        console.log("文件保存错误")
+                        console.log(err);
+                        res.status(200);
+                        res.send({
+                            "code": "2",
+                            "msg": "image upload failure!"
+                        });
+                        return;
+                    }
+                    console.log("文件保存成功");
+                    res.status(200);
+                    res.send({
+                        "code": "1",
+                        "msg": "image upload success! use config path and image name to find image.",
+                        "data": fileName
+                    });
+                });
+            });
+        } else {
+            res.status(200);
+            res.send(false);
+        }
+    }
 }
 ;
 
