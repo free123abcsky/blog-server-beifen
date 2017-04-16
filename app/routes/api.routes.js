@@ -25,7 +25,7 @@ router.post('/signup', authController.signup); //用户注册
 router.get('/users/:userId/verify', authController.activeAccount);  //邮箱链接激活帐户
 
 //User相关
-router.post('/change_password', UsersController.changePassword);  // 密码更新
+router.post('/change_password', UsersController.changePassword);  // 更新密码
 router.get('/users', UsersController.getAll);  //获取所有用户列表
 router.get('/user/:id', UsersController.getById);  //通过id查找用户
 router.get('/user/original/:id', UsersController.getByIdWithOriginal);  //为了安全,使用post获取某人的个人信息

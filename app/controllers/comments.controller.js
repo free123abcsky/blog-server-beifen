@@ -6,8 +6,7 @@ let fs = require('fs');
 //MyInfo的数据模型
 let Articles = require('../models').Article;
 let Comments = require('../models').Comment;
-//数据库查询同一错误处理
-let DO_ERROR_RES = require('../utils/DO_ERROE_RES.js');
+var ERROR  = require('../utils/errcode');
 
 /**
  * 更新文章的评论数
@@ -42,14 +41,10 @@ module.exports = {
 	getAll: function (req, res, next) {
 		Comments.find({}, function (err, docs) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
-			res.send({
-				"code": "1",
-				"msg": "comments list",
-				"data": docs
-			})
+			res.retJson(docs);
 		})
 	},
 	/**
@@ -71,7 +66,7 @@ module.exports = {
 					// console.log(`获取id:${arr[recordLen]}`);
 					Comments.findOne({_id: arr[recordLen]}, function (err, comment) {
 						if (err) {
-							DO_ERROR_RES(res);
+                            res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 							reject();
 							return next();
 						}
@@ -94,7 +89,7 @@ module.exports = {
 
 		Comments.findOne({_id: req.params.comment_id}, function (err, comment) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			if (!!comment) {
@@ -103,41 +98,23 @@ module.exports = {
 				if (comment.article_id.toString() === comment.pre_id.toString() && comment.next_id.length > 0) {
 					//在这个情况下,next_id是可能有值的。
 					getCommentDetail(comment.next_id).then(function () {
-						res.status(200);
-						res.send({
-							"code": "1",
-							"msg": "find comment by comment_id success!",
-							"data": CommentsArr
-						})
+						res.retJson(CommentsArr);
 					}, function () {
-						res.status(200);
-						res.send({
-							"code": "2",
-							"msg": "get sub comment by comment_id failure!"
-						})
+						res.retError({code: ERROR.DATA_NOT_FOUND, msg: 'get sub comment by comment_id failure!'});
 					});
 				} else {
-					res.status(200);
-					res.send({
-						"code": "1",
-						"msg": "find comment by comment_id success!",
-						"data": CommentsArr
-					})
+					res.retJson(CommentsArr);
 				}
 
 			} else {
-				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": "comment non-exist!"
-				})
+				res.retError({code: ERROR.DATA_NOT_FOUND, msg: '评论信息不存在'});
 			}
 		})
 	},
 	edit: function (req, res, next) {
 		Comments.findOne({_id: req.body._id}, function (err, comment) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			if (!!comment) {
@@ -151,18 +128,9 @@ module.exports = {
 				comment.state = state;
 				//保存
 				comment.save();
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": "comment edit success!",
-					"data": comment
-				});
+				res.retJson(comment);
 			} else {
-				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": "comment edit failure, comment non-exist!"
-				});
+				res.retError({code: ERROR.DATA_NOT_FOUND, msg: '评论维护失败，评论信息不存在'});
 			}
 		});
 	},
@@ -179,7 +147,7 @@ module.exports = {
 
 		Comments.findOne({_id: req.params.id}, function (err, comment) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			if (!!comment) {
@@ -188,24 +156,20 @@ module.exports = {
 				let preId = comment.pre_id;
 				comment.remove(function (err) {
 					if (err) {
-						DO_ERROR_RES(res);
+                        res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 						return next();
 					}
 					refreshArticleCommentNum(articleId).then(function () {
 						if (nextId.length > 0) {
 							//删除的评论是父评论
 							removeComment(nextId,function () {
-								res.status(200);
-								res.send({
-									"code": "1",
-									"msg": 'delete success, refreshed the comment_num, delete the pre_comment and his children!'
-								});
+								res.retSuccess({code: 0, msg: '删除该评论成功'});
 							});
 						} else {
 							//删除的评论是子评论,还需要更新父评论
 							Comments.findOne({_id: preId}, function (err, preComment) {
 								if (err) {
-									DO_ERROR_RES(res);
+                                    res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 									return next();
 								}
 								if (!!preComment && preComment.next_id > 0) {
@@ -213,39 +177,23 @@ module.exports = {
 									preComment.next_id.splice(preComment.next_id.indexOf(comment._id), 1);
 									preComment.save(function (err) {
 										if (err) {
-											DO_ERROR_RES(res);
+                                            res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 											return next();
 										}
-										res.status(200);
-										res.send({
-											"code": "1",
-											"msg": 'child_comment delete success, pre_comment has refreshed!'
-										});
+                                        res.retSuccess({code: 0, msg: '删除该评论成功'});
 
 									});
 								} else {
-									res.status(200);
-									res.send({
-										"code": "1",
-										"msg": 'child_comment delete success, pre_comment has no child_comment!'
-									});
+                                    res.retSuccess({code: 0, msg: '删除该评论成功'});
 								}
 							})
 						}
 					}, function (errMsg) {
-						res.status(200);
-						res.send({
-							"code": "2",
-							"msg": errMsg
-						});
+						res.retJson({code: ERROR.SYSTEM_ERROR, msg: errMsg});
 					});
 				});
 			} else {
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": 'the comment not found, so i think i can give you a success!'
-				});
+                res.retSuccess({code: 0, msg: '删除该评论成功'}); //评论未找到，默认为删除成功
 			}
 		})
 	},
@@ -261,12 +209,7 @@ module.exports = {
 		})
 		.sort('-time')
 		.exec(function (err, commentList) {
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": "comment to articles list get success!",
-				"data": commentList
-			})
+			res.retJson(commentList);
 		});
 	},
 	/**
@@ -320,7 +263,7 @@ module.exports = {
 		//保存评论
 		comment.save(function (err) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			refreshArticleCommentNum(article_id).then(function () {
@@ -328,31 +271,15 @@ module.exports = {
 					//如果当前的评论是个子评论
 					//需要修改父评论的next_id信息，使其指向子评论
 					addToPreComment(comment).then(function () {
-						res.status(200);
-						res.send({
-							"code": "1",
-							"msg": "comment create success, pre comment edit success!"
-						});
+						res.retSuccess({code: 0, msg: '添加评论成功'});
 					}, function (errMsg) {
-						res.status(200);
-						res.send({
-							"code": "2",
-							"msg": errMsg
-						});
+                        res.retSuccess({code: ERROR.SYSTEM_ERROR, msg: '添加评论失败，' + errMsg});
 					})
 				} else {
-					res.status(200);
-					res.send({
-						"code": "1",
-						"msg": "comment create success!"
-					});
+                    res.retSuccess({code: 0, msg: '添加评论成功'});
 				}
 			}, function (errMsg) {
-				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": errMsg
-				});
+                res.retSuccess({code: ERROR.SYSTEM_ERROR, msg: '添加评论失败，' + errMsg});
 			});
 		});
 	}
@@ -362,7 +289,7 @@ module.exports = {
 	isIReplied: function (req, res, next) {
 		Comments.findOne({_id: req.body._id}, function (err, comment) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			if (!!comment) {
@@ -370,17 +297,9 @@ module.exports = {
 				comment.isIReplied = true;
 				//保存
 				comment.save();
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": "comment isIReplied change success!"
-				});
+                res.retSuccess({code: 0, msg: '评论回复数据修改成功'});
 			} else {
-				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": "comment isIReplied change failure, comment non-exist!"
-				});
+                res.retError({code: ERROR.DATA_NOT_FOUND, msg: '评论回复数据修改失败， 评论不存在'});
 			}
 		});
 	}
@@ -389,24 +308,16 @@ module.exports = {
 	changeState: function (req, res, next) {
 		Comments.findOne({_id: req.body._id}, function (err, comment) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			if (!!comment) {
 				comment.state = !comment.state;
 				//保存
 				comment.save();
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": "comment state change success!"
-				});
+				res.retSuccess({code: 0, msg: '评论状态修改成功'});
 			} else {
-				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": "comment state change failure, comment non-exist!"
-				});
+                ret.retError({code: ERROR.DATA_NOT_FOUND, msg: '评论状态修改失败， 评论不存在'});
 			}
 		});
 	}
@@ -419,12 +330,7 @@ module.exports = {
 			path: "article_id",
 			select: {title: 1}
 		}).exec(function (err, commentList) {
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": "comment to articles list get success!",
-				"data": commentList
-			})
+            res.retJson(commentList);
 		})
 	}
 }

@@ -11,7 +11,7 @@ let StatisticController = require('../controllers/statistic.controller.js');
 /**
  * 访问数据统计
  * */
-router.use('*', cors(), function (req, res, next) {
+router.use('*', function (req, res, next) {
 	let ip = getClientIp(req);
 	let url = req.baseUrl.toString();
 	let time = new Date();

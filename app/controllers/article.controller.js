@@ -9,7 +9,7 @@ let Tags = require('../models').Tag;
 let Articles = require('../models').Article;
 let Comments = require('../models').Comment;
 let fs = require('fs');
-let DO_ERROR_RES = require('../utils/DO_ERROE_RES.js');
+var ERROR  = require('../utils/errcode');
 
 let marked = require('marked');
 /**
@@ -66,7 +66,7 @@ function getArticleContentToAbstract(content, length) {
 function refreshTagUsedNum() {
     Tags.find({},{'_id': 1},function (err, tags) {
         if (err) {
-            DO_ERROR_RES(res);
+            res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
             return next();
         }
         var _allTagArr = []
@@ -117,7 +117,7 @@ module.exports = {
             //id存在-->修改操作
             Articles.findOne({_id: _id}, function (err, article) {
                 if (err) {
-                    DO_ERROR_RES(res);
+                    res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                     return next();
                 }
                 if (!!article) {
@@ -154,14 +154,14 @@ module.exports = {
                     //评论数更新
                     Comments.count({article_id: _id}, function (err, count) {
                         if (err) {
-                            DO_ERROR_RES(res);
+                            res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                             return next();
                         }
                         article.comment_num = parseInt(count);
                         //保存
                         article.save(function (err) {
                             if (err) {
-                                DO_ERROR_RES(res);
+                                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                                 return next();
                             }
                             res.status(200);
@@ -225,16 +225,10 @@ module.exports = {
             })
             .exec(function (err, docs) {
                 if (err) {
-                    DO_ERROR_RES(res);
+                    res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                     return next();
                 }
-                // console.log(docs)
-                res.status(200);
-                res.send({
-                    "code": "1",
-                    "msg": "article list get success!",
-                    "data": docs
-                });
+                res.retJson(docs);
             })
     },
     //home需要的格式(带分页的文章列表)
@@ -247,7 +241,7 @@ module.exports = {
             select: 'name'
         }).exec(function (err, docs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             //docs不为空,最少为[]
@@ -257,12 +251,7 @@ module.exports = {
             //     //获取文章摘要
             //     article.content = getArticleContentToAbstract(article.content.substr(0, 500), 250);
             // });
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": "article list get success!",
-                "data": docs
-            });
+            res.retJson(docs);
         });
     },
     getById: function (req, res, next) {
@@ -272,7 +261,7 @@ module.exports = {
             select: 'name'
         }).exec(function (err, doc) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             if (!!doc) {
@@ -280,25 +269,16 @@ module.exports = {
                 doc.read_num++;
                 doc.save(function (err) {
                     if (err) {
-                        DO_ERROR_RES(res);
+                        res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                         return next();
                     }
                     //文章的html内容在html字段中，获取文章时不需要再进行编译转换
                     // doc.content = marked(doc.content);
-                    res.status(200);
-                    res.send({
-                        "code": "1",
-                        "msg": `get aurticle ${req.params.id} success! but get comment need other request to {{url}}/api/article/comments/:id`,
-                        "data": doc
-                    });
+                    res.retJson(doc, {code: 0, "msg": `get aurticle ${req.params.id} success! but get comment need other request to {{url}}/api/article/comments/:id`});
                 });
 
             } else {
-                res.status(200);
-                res.send({
-                    "code": "2",
-                    "msg": `article non-exist!`
-                });
+                res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该文章不存在或已删除'});
             }
         })
     },
@@ -308,22 +288,13 @@ module.exports = {
             path: "tags",
         }).exec(function (err, doc) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             if (!!doc) {
-                res.status(200);
-                res.send({
-                    "code": "1",
-                    "msg": `get aurticle ${req.params.id} success! but get comment need other request to {{url}}/api/article/comments/:id`,
-                    "data": doc
-                });
+                res.retJson(doc, {code: 0, "msg": `get aurticle ${req.params.id} success! but get comment need other request to {{url}}/api/article/comments/:id`});
             } else {
-                res.status(200);
-                res.send({
-                    "code": "2",
-                    "msg": `article non-exist!`
-                });
+                res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该文章不存在或已删除'});
             }
         });
     },
@@ -331,7 +302,7 @@ module.exports = {
         //删除文章还要删除和文章一起的评论,还有标签统计
         Articles.findOne({_id: req.params.id}, function (err, article) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             if (!!article) {
@@ -348,27 +319,19 @@ module.exports = {
                 //先删除评论!!
                 Comments.remove({article_id: article._id}, function (err) {
                     if (err) {
-                        DO_ERROR_RES(res);
+                        res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                         return next();
                     }
                     article.remove(function (err) {
                         if (err) {
-                            DO_ERROR_RES(res);
+                            res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                             return next();
                         }
-                        res.status(200);
-                        res.send({
-                            "code": "1",
-                            "msg": `delete success, article && tag_num && comment has removed!`
-                        });
+                        res.retSuccess({code: 0, msg: '该文章删除成功'});
                     });
                 });
             } else {
-                res.status(200);
-                res.send({
-                    "code": "2",
-                    "msg": `article non-exist!`
-                });
+                ret.retError({code: ERROR.DATA_NOT_FOUND, msg: '该文章不存在或已删除'});
             }
 
         });
@@ -377,7 +340,7 @@ module.exports = {
     getHistory: function (req, res, next) {
         Articles.find({state: true}, {'title': 1, 'publish_time': 1, 'read_num': 1, 'comment_num': 1, 'state': 1}).sort('-publish_time').exec(function (err, docs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             let historyArr = [];
@@ -441,12 +404,7 @@ module.exports = {
                     }
                 }
             }
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": `article history find success!`,
-                "data": historyArr
-            });
+            res.retJson(historyArr);
         })
     },
     getByTagId: function (req, res, next) {
@@ -459,7 +417,7 @@ module.exports = {
             select: 'name',
         }).exec(function (err, docs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             //docs不为空,最少为[]
@@ -467,12 +425,7 @@ module.exports = {
                 //获取文章摘要
                 article.content = getArticleContentToAbstract(article.content.substr(0, 500), 250);
             });
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": "find article by tag_id success!",
-                "data": docs
-            });
+            res.retJson(docs);
         })
     },
     /**
@@ -483,28 +436,23 @@ module.exports = {
         var _topNum = parseInt(req.params.topNum);
         Articles.find({state: true}, {'title': 1, 'read_num': 1, 'publish_time': 1}).sort('-publish_time').limit(_topNum).exec(function (err, latestTopDocs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             Articles.find({state: true}, {'title': 1, 'read_num': 1}).sort('-read_num').limit(_topNum).exec(function (err, readTopDocs) {
                 if (err) {
-                    DO_ERROR_RES(res);
+                    res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                     return next();
                 }
                 Tags.find({}, {'name': 1, 'used_num': 1}).sort('-used_num').limit(10).exec(function (err, tagTopDocs) {
                     if (err) {
-                        DO_ERROR_RES(res);
+                        res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                         return next();
                     }
-                    res.status(200);
-                    res.send({
-                        "code": "1",
-                        "msg": "read-top article and latest-top and tags article list get success!",
-                        "data": {
-                            latest: latestTopDocs,
-                            read: readTopDocs,
-                            tag: tagTopDocs,
-                        }
+                    res.retJson({
+                        latest: latestTopDocs,
+                        read: readTopDocs,
+                        tag: tagTopDocs,
                     });
                 });
             });
@@ -516,12 +464,7 @@ module.exports = {
     getLatestTop: function (req, res, next) {
         //查找文章
         Articles.find({state: true}, {'title': 1, 'read_num': 1, 'publish_time': 1}).sort('-publish_time').limit(parseInt(req.params.topNum)).exec(function (err, docs) {
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": "latest-top article list get success!",
-                "data": docs
-            });
+            ret.retJson(docs);
         })
     },
     /**
@@ -530,12 +473,7 @@ module.exports = {
     getReadTop: function (req, res, next) {
         //查找文章
         Articles.find({state: true}, {'title': 1, 'read_num': 1}).sort('-read_num').limit(parseInt(req.params.topNum)).exec(function (err, docs) {
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": "read-top article list get success!",
-                "data": docs
-            });
+            ret.retJson(docs);
         })
     },
     /**
@@ -544,15 +482,10 @@ module.exports = {
     getUsedTop: function (req, res, next) {
         Tags.find({}, {'name': 1, 'used_num': 1}).sort('-used_num').limit(parseInt(req.params.topNum)).exec(function (err, docs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": `find tag all success!`,
-                "data": docs
-            });
+            ret.retJson(docs);
         })
     },
     /**
@@ -581,13 +514,8 @@ module.exports = {
                 console.log('上传图片的存放位置:' + uploadPath);
                 fs.writeFile(uploadPath, data, function (err) {
                     if (err) {
-                        console.log("文件保存错误")
-                        console.log(err);
-                        res.status(200);
-                        res.send({
-                            "code": "2",
-                            "msg": "image upload failure!"
-                        });
+                        console.log("文件保存错误," + err)
+                        res.retError({code: ERROR.FILE_UPLOAD_FAIL, msg: '文件上传失败' + err.message});
                         return;
                     }
                     console.log("文件保存成功");
@@ -597,11 +525,11 @@ module.exports = {
                         "msg": "image upload success! use config path and image name to find image.",
                         "data": fileName
                     });
+                    res.retJson({fileName: fileName});
                 });
             });
         } else {
-            res.status(200);
-            res.send(false);
+            res.retError({code: ERROR.DATA_NOT_FOUND, msg: '上传失败，至少上传一个文件'})
         }
     }
 }

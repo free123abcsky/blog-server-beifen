@@ -28,7 +28,7 @@ require('./utils/db')(config);
 app.set('port', process.env.PORT || config.port);
 app.use(log4js.connectLogger(logger, {level:log4js.levels.INFO, format:':method :url'}));
 app.use(resapi);
-//app.use(cors());
+app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: false

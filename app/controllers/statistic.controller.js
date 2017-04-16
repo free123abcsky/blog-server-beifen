@@ -6,8 +6,7 @@ let mongoose = require('mongoose');
 let config = require('../config/config.js');
 //数据模型
 let Statistic = require('../models').Statistic;
-//数据库查询同一错误处理
-let DO_ERROR_RES = require('../utils/DO_ERROE_RES.js');
+var ERROR  = require('../utils/errcode');
 let superagent = require('superagent');
 let moment = require('moment');
 const SIGNPATH = '/api/statistic/sign';
@@ -28,47 +27,34 @@ module.exports = {
 			// console.log('-----------------------')
 		});
 	},
-	sign: function get(req, res, next) {
-		res.status(200);
-		res.send({
-			"code": "1",
-			"msg": "sign in success!",
-		});
-	},
+    sign: function get(req, res, next) {
+        res.status(200);
+        res.retSuccess({
+            "code": "1",
+            "msg": "sign in success!",
+        });
+    },
 	get: function get(req, res, next) {
 		Statistic.find({'path': SIGNPATH}, function (err, docs) {
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": "get PV statistic success!",
-				"data": docs
-			});
+			res.retJson(docs);
 		})
 	},
 	getAll: function get(req, res, next) {
 		Statistic.find({}, function (err, docs) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": "get all statistic success!",
-				"data": docs
-			});
+			res.retJson(docs);
 		})
 	},
 	deleteAll: function deleteAll(req, res, next) {
 		Statistic.remove({}, function (err, docs) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
-			res.send({
-				"code": "1",
-				"msg": "delete all statistic success!"
-			});
+            res.retSuccess({code: 0, msg: '删除所有统计成功'});
 		})
 	},
 
@@ -83,12 +69,7 @@ module.exports = {
 		let path = req.path.toString();
 		let result = cache.has(path);
 		if (!!result) {
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": "get chart data success!",
-				"data": result,
-			});
+			res.retJson(result);
 		} else {
 			// 24小时
 			_start = moment().subtract(24, 'hours').format();
@@ -103,12 +84,7 @@ module.exports = {
 					_end = moment().endOf('day').format();
 					_count(_start, _end, function () {
 						cache.set(path, _result, EXPIRE);
-						res.status(200);
-						res.send({
-							"code": "1",
-							"msg": "get chart data success!",
-							"data": _result,
-						});
+                        res.retJson(_result);
 					})
 				})
 			});
@@ -135,12 +111,7 @@ module.exports = {
 		let path = req.path.toString();
 		let result = cache.has(path);
 		if (!!result) {
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": "get statistic map data success!",
-				"data": result
-			});
+			res.retJson(result)
 		} else {
 			const _ak = config.baiduAK || 'yFKaMEQnAYc1hA0AKaNyHGd4HTQgTNvO';
 			let result = [];
@@ -156,7 +127,7 @@ module.exports = {
 				}
 			}, function (err, docs) {
 				if (err) {
-					DO_ERROR_RES(res);
+                    res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 					return next();
 				}
 				let _uniqueObj = {};
@@ -208,12 +179,7 @@ module.exports = {
 							});
 						}
 						cache.set(path, result, EXPIRE);
-						res.status(200);
-						res.send({
-							"code": "1",
-							"msg": "get statistic map data success!",
-							"data": result
-						});
+						res.retJson(result);
 					}
 				}
 			})
@@ -228,12 +194,7 @@ module.exports = {
 		let path = req.path.toString();
 		let result = cache.has(path);
 		if (!!result) {
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": "get chart data success!",
-				"data": result
-			});
+			res.retJson(result);
 		} else {
 			let _dayStart = moment().subtract(24, 'hours').format();
 			let _dayEnd = moment().format();
@@ -268,12 +229,8 @@ module.exports = {
 				obj.x = [].concat(obj.x.slice(_end), obj.x.slice(0, _end));
 				obj.y = [].concat(obj.y.slice(_end), obj.y.slice(0, _end));
 				cache.set(path, obj, EXPIRE);
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": "get chart data success!",
-					"data": obj
-				});
+
+				res.retJson(obj);
 			})
 		}
 	},

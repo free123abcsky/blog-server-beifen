@@ -74,10 +74,22 @@ function retError(status){
     });
 }
 
+function retSuccess(status){
+    var _res = this;
+
+    status.code = status.code || 0;
+    status.msg = status.msg || 'api success';
+
+    _res.status(200).json({
+        status  : status
+    });
+}
+
 module.exports = function(req, res, next) {
 
     res.retJson = retJson;
     res.retError = retError;
+    res.retSuccess = retSuccess;
 
     next();
 };

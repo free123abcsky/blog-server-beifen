@@ -13,4 +13,6 @@ module.exports = {
     'LOGIN_REQUIRED': 10005,  //登录失败
     'PERMISSION_DENIED': 10006,  //权限不足
     'TOKEN_EXPIRE': 10007,  //token过期
+    'FILE_UPLOAD_FAIL': '',  //文件上传失败
+    'SYSTEM_ERROR': 10008,  //系统错误  system error or request params error, please check out!
 }

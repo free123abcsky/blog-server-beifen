@@ -8,18 +8,24 @@ let md5 = require('js-md5');
 let fs = require('fs');
 //MyInfo的数据模型
 let Users = require('../models').User;
-//数据库查询同一错误处理
-let DO_ERROR_RES = require('../utils/DO_ERROE_RES.js');
 let getClientIp = require('../utils/getClientIp.utils.js');
+var ERROR  = require('../utils/errcode');
 let marked = require('marked');
 
 module.exports = {
+
+    /**
+	 * 更新密码
+     * @param req
+     * @param res
+     * @param next
+     */
 	changePassword: function (req, res, next) {
 		let {_id, username, password, new_password} = req.body;
 
 		Users.findOne({_id: _id}, function (err, user) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			//有用户数据且密码正确
@@ -28,43 +34,38 @@ module.exports = {
 					user.username = username;
 					user.password = new_password;
 					user.save();
-					res.status(200);
-					res.send({
-						"code": "1",
-						"msg": "user password change success, you should re-login!"
-					});
+					res.retSuccess({code: 0, msg: '密码修改成功'});
 					// res.redirect('/#/login');
 				} else {
-					res.status(200);
-					res.send({
-						"code": "2",
-						"msg": "user password not right!"
-					});
+					res.retError({code: ERROR.PARAM_ERROR, msg: '输入密码不正确'});
 				}
 
 			} else {
-				res.status(200);
-				res.send({
-					"code": "3",
-					"msg": "user non-exist, please check out!"
-				});
+				res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该用户不存在,请检查'});
 			}
 		});
 	},
+    /**
+	 * 获取所有用户
+     * @param req
+     * @param res
+     * @param next
+     */
 	getAll: function (req, res, next) {
 		Users.find({}, {'username': 0, 'password': 0, 'is_admin': 0, 'login_info': 0, '__v': 0}, function (err, users) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
-			res.send({
-				"code": "1",
-				"msg": "user list",
-				"data": users
-			})
+			ret.retJson(users);
 		})
 	},
-	//用于home显示
+    /**
+	 * 通过id获取用户信息
+     * @param req
+     * @param res
+     * @param next
+     */
 	getById: function (req, res, next) {
 		Users.findOne({_id: req.params.id}, {
 			'_id': 0,
@@ -75,7 +76,7 @@ module.exports = {
 			'__v': 0
 		}, function (err, user) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			//将我的介绍由markdown转化为html输出
@@ -96,18 +97,9 @@ module.exports = {
 			//user.personal_state = marked(user.personal_state);
 
 			if (!!user) {
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": "user info",
-					"data": user
-				})
+				res.retJson(user);
 			} else {
-				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": "user non-exist"
-				})
+				res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该用户不存在'});
 			}
 
 		})
@@ -119,23 +111,15 @@ module.exports = {
 			'password': 0,
 		}, function (err, user) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 
 			if (!!user) {
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": "user list",
-					"data": user
-				})
+				res.retJson(user);
 			} else {
 				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": "user non-exist"
-				})
+                res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该用户不存在'});
 			}
 
 		})
@@ -143,17 +127,13 @@ module.exports = {
 	edit: function (req, res, next) {
 		Users.findOne({_id: req.body._id}, function (err, user) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
 			//如果没有数据,则增加
 			if (!user) {
 				//发送
-				res.status(200);
-				res.send({
-					"code": "2",
-					"msg": "user not find!"
-				});
+                res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该用户不存在'});
 			} else {
 				({
 					full_name: user.full_name,
@@ -167,11 +147,7 @@ module.exports = {
 					user.is_admin = req.body.is_admin
 				}
 				user.save();
-				res.status(200);
-				res.send({
-					"code": "1",
-					"msg": "user update success!"
-				});
+				res.retSuccess({code: 0, msg: '更新用户信息成功'});
 			}
 		});
 
@@ -180,14 +156,10 @@ module.exports = {
 	delete: function (req, res, next) {
 		Users.remove({_id: req.params.id}, function (err) {
 			if (err) {
-				DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
 				return next();
 			}
-			res.status(200);
-			res.send({
-				"code": "1",
-				"msg": `user ${req.params.id} delete success!`
-			});
+			res.retSuccess({code: 0, msg: `用户 ${req.params.id} 删除成功!`});
 		});
 	}
 };
