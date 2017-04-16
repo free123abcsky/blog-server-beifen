@@ -3,9 +3,7 @@
  * Created by xiangsongtao on 16/3/4.
  */
 'use strict'
-
-//数据库查询同一错误处理
-let DO_ERROR_RES = require('../utils/DO_ERROE_RES.js');
+var ERROR  = require('../utils/errcode');
 //MyInfo的数据模型
 let Tags = require('../models').Tag;
 
@@ -13,21 +11,16 @@ module.exports = {
     get: function (req, res, next) {
         Tags.find({}, function (err, docs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": `find tag all success!`,
-                "data":docs
-            });
+            res.retJson(docs);
         })
     },
     getAllWithStructure: function (req, res, next) {
         Tags.find({}).sort('catalogue_name').exec(function (err, docs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             let tagsArr = [];
@@ -57,33 +50,20 @@ module.exports = {
                     }
                 }
             }
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": `find tag all with structure success!`,
-                "data":tagsArr
-            });
+            res.retJson(tagsArr);
         });
     },
     getById: function (req, res, next) {
         Tags.findOne({_id: req.params.id}, function (err, doc) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             if (!!doc) {
-                res.status(200);
-                res.send({
-                    "code": "1",
-                    "msg": `tag find success!`,
-                    "data": doc
-                });
+
+                res.retJson(doc);
             } else {
-                res.status(200);
-                res.send({
-                    "code": "2",
-                    "msg": `tag non-exist!`
-                });
+                res.retError({code: ERROR.DATA_NOT_FOUND, msg: '该标签不存在'});
             }
 
         })
@@ -91,16 +71,12 @@ module.exports = {
     add: function (req, res, next) {
         Tags.findOne({name: req.body.name}, function (err, doc) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             if (!!doc) {
-                res.status(200);
-                res.send({
-                    "code": "2",
-                    "msg": "tags added failure, tag already exist!",
-                    "data": doc._id
-                })
+
+                res.retError({code: ERROR.DATA_EXISTED, msg: '该标签已经存在'});
             } else {
                 //新增标签
                 let {name, catalogue_name} =  req.body;
@@ -114,85 +90,48 @@ module.exports = {
                 let tag = new Tags(tagData);
                 tag.save();
                 tagData._id = tag._id;
-                res.status(200);
-                res.send({
-                    "code": "1",
-                    "msg": "tags add success!",
-                    "data": tagData
-                })
+                res.retJson(tagData);
             }
         })
     },
     edit: function (req, res, next) {
         Tags.findOne({_id: req.body._id}, function (err, tag_orig) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
             if (!!tag_orig) {
                 Tags.findOne({name: req.body.name}, function (err, doc) {
                     if (err) {
-                        DO_ERROR_RES(res);
+                        res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                         return next();
                     }
                     if (!!doc && (doc._id.toString() !== tag_orig._id.toString())) {
-                        res.status(200);
-                        res.send({
-                            "code": "3",
-                            "msg": "tag name exist, please use another one!"
-                        });
+
+                        res.retError({code: ERROR.DATA_EXISTED, msg: '该标签已经存在'});
                     }else{
                         tag_orig.name = req.body.name;
                         tag_orig.catalogue_name = req.body.catalogue_name;
                         tag_orig.save();
-                        res.status(200);
-                        res.send({
-                            "code": "1",
-                            "msg": "tag edit success!",
-                            "data":tag_orig
-                        });
+                        res.retJson(tag_orig)
                     }
                 })
 
             } else {
-                res.status(200);
-                res.send({
-                    "code": "2",
-                    "msg": "tag non-exist or params error!"
-                });
+
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: '标签不存在或参数错误'})
             }
         })
-
-        // Tags.update({_id: req.body._id},{
-        //     $set:{
-        //         name:req.body.name,
-        //         catalogue_name:req.body.catalogue_name
-        //     }
-        // }, function (err) {
-        //     if (err) {
-        //         res.status(200);
-        //         res.send({
-        //             "code": "2",
-        //             "msg": "tag non-exist or params error!"
-        //         });
-        //     }else{
-        //         res.status(200);
-        //         res.send({
-        //             "code": "1",
-        //             "msg": "tag edit success!"
-        //         });
-        //     }
-        // });
     },
     delete: function (req, res, next) {
         Tags.remove({_id: req.params.id}, function (err) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
-            res.status(200);
-            res.send({
-                "code": "1",
+
+            res.retSuccess({
+                "code": 0,
                 "msg": `tag ${req.params.id} delete success!`
             });
         });
@@ -200,15 +139,11 @@ module.exports = {
     getUsedTop:function (req, res, next) {
         Tags.find({},{'name':1,'used_num':1}).sort('-used_num').limit(parseInt(req.params.topNum)).exec(function (err, docs) {
             if (err) {
-                DO_ERROR_RES(res);
+                res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": `find tag all success!`,
-                "data":docs
-            });
+
+            res.retJson(docs);
         })
     },
 };
