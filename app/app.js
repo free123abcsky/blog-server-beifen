@@ -26,6 +26,7 @@ require('./utils/db')(config);
 
 //配置路由基本设置（中间件设置）
 app.set('port', process.env.PORT || config.port);
+app.use(express.static(__dirname+'/public'))
 app.use(log4js.connectLogger(logger, {level:log4js.levels.INFO, format:':method :url'}));
 app.use(resapi);
 app.use(cors());

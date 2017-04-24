@@ -7,6 +7,7 @@ let multipartMiddleware = multipart();
 var expressJwt = require('express-jwt');
 var env = process.env.NODE_ENV || 'development';
 var config = require('../config/config')[env];
+var qiniu = require('../utils/qiniu');
 var jwtOptions = {
     secret: config.sessionSecret
 };
@@ -31,6 +32,7 @@ router.get('/user/:id', UsersController.getById);  //通过id查找用户
 router.get('/user/original/:id', UsersController.getByIdWithOriginal);  //为了安全,使用post获取某人的个人信息
 router.put('/user', UsersController.edit);  //用户信息维护
 router.delete('/user/:id', UsersController.delete);  //通过id删除用户
+router.post('/user/upload', multipartMiddleware, UsersController.uploadAvatar);  //上传头像
 
 // Tags相关
 router.get('/tags', TagsController.get); //查找all
@@ -75,5 +77,6 @@ router.delete('/statistic/deleteAll', StatisticController.deleteAll); //total->�
 router.get('/statistic/total', StatisticController.total); //chart->当前的访问数，折线图
 router.get('/statistic/chart', StatisticController.chart);
 router.get('/statistic/map', StatisticController.map); //ip->经纬度+访问数
+
 
 module.exports = router;

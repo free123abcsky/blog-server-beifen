@@ -519,12 +519,6 @@ module.exports = {
                         return;
                     }
                     console.log("文件保存成功");
-                    res.status(200);
-                    res.send({
-                        "code": "1",
-                        "msg": "image upload success! use config path and image name to find image.",
-                        "data": fileName
-                    });
                     res.retJson({fileName: fileName});
                 });
             });

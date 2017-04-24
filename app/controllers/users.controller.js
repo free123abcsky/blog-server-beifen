@@ -6,6 +6,7 @@ let mongoose = require('mongoose');
 let $base64 = require('../utils/base64.utils.js');
 let md5 = require('js-md5');
 let fs = require('fs');
+let qiniu = require('../utils/qiniu');
 //MyInfo的数据模型
 let Users = require('../models').User;
 let getClientIp = require('../utils/getClientIp.utils.js');
@@ -161,7 +162,37 @@ module.exports = {
 			}
 			res.retSuccess({code: 0, msg: `用户 ${req.params.id} 删除成功!`});
 		});
-	}
+	},
+    /**
+     * 头像上传
+     * @param req
+     * @param res
+     * @param next
+     */
+    uploadAvatar: function(req, res, next){
+
+        if (req.files) {
+
+            const UploadFilePath = './uploads/';
+            let imgInfo = req.files.uploadImg;
+            let arr = imgInfo.type.split('/');
+            let suffix = arr[arr.length - 1];
+            //新建文件名
+            let fileName = `${Date.parse(new Date())}.${suffix}`;
+            let uploadPath = `${UploadFilePath}${fileName}`;
+
+            qiniu.client.uploadFile(imgInfo.path, {key: fileName}, function (err, result) {
+                if (err) {
+                    next(err)
+                }
+                res.retJson({
+					imgUrl: result.url
+				});
+            });
+        } else {
+            res.retError({code: ERROR.DATA_NOT_FOUND, msg: '上传失败，至少上传一个文件'})
+        }
+    }
 };
 
 
