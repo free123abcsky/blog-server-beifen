@@ -164,20 +164,11 @@ module.exports = {
                                 res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                                 return next();
                             }
-                            res.status(200);
-                            res.send({
-                                "code": "1",
-                                "msg": "article edit success!",
-                                "data": article
-                            });
+                            res.retJson(article, {code: 0, "msg": 'article edit success!'});
                         });
                     })
                 } else {
-                    res.status(200);
-                    res.send({
-                        "code": "2",
-                        "msg": "article edit failure, article non-exist!"
-                    });
+                    res.retError({code: ERROR.DATA_NOT_FOUND, msg: '文章信息不存在'});
                 }
             });
         } else {
@@ -202,13 +193,7 @@ module.exports = {
             // 增加最后修改时间存储
             article.last_modify_time = new Date();
 
-
-            res.status(200);
-            res.send({
-                "code": "1",
-                "msg": "article add success!",
-                "data": article
-            });
+            res.retJson(article, {code: 0, "msg": 'article add success!'});
         }
 
     },
