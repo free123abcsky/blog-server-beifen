@@ -40,7 +40,7 @@ router.get('/tags_with_structure', TagsController.getAllWithStructure);
 router.get('/tag/:id', TagsController.getById);  //查找某个tag
 router.post('/tag', expressJwt(jwtOptions), TagsController.add); //增加
 router.put('/tag', expressJwt(jwtOptions), TagsController.edit); //修改
-router.delete('/tag/:id', TagsController.delete); //delete
+router.delete('/tag/:id', expressJwt(jwtOptions), TagsController.delete); //delete
 
 //Article 相关
 router.get('/articles', ArticleController.getAll); //查找全部,进行分页设置(api测试)

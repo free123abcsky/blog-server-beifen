@@ -52,8 +52,6 @@ function getArticleContentToAbstract(content, length) {
             }
         }
     }
-    console.log(_abstract)
-    console.log(_length)
     return _abstract;
 }
 
@@ -229,13 +227,6 @@ module.exports = {
                 res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
                 return next();
             }
-            //docs不为空,最少为[]
-            //文章摘要在文章保存阶段处理
-
-            // docs.forEach(function (article) {
-            //     //获取文章摘要
-            //     article.content = getArticleContentToAbstract(article.content.substr(0, 500), 250);
-            // });
             res.retJson(docs);
         });
     },
@@ -271,6 +262,7 @@ module.exports = {
         //需要处理,因为单个文章是文章的全文,并且含有文章的评论信息
         Articles.findOne({_id: req.params.id}).populate({
             path: "tags",
+            select: 'name'
         }).exec(function (err, doc) {
             if (err) {
                 res.retError({code: ERROR.SYSTEM_ERROR, msg: err.message});
